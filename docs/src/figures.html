@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>session-triage figures</title>
+<style>
+  :root{
+    --ink:#14161a; --sub:#5b6270; --line:#e3e6ec; --bg:#ffffff; --soft:#f5f7fa;
+    --run:#e8a20c; --run-bg:#fff6e0;
+    --ver:#7a4fd6; --ver-bg:#f2ecff;
+    --send:#1f7ae0; --send-bg:#e7f1ff;
+    --ask:#e0362c; --ask-bg:#ffeceb;
+    --done:#1f9d55; --done-bg:#e6f6ec;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#ccc;font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;color:var(--ink)}
+  .fig{width:1600px;height:900px;background:var(--bg);position:relative;overflow:hidden;margin:0 0 40px}
+  .kicker{position:absolute;left:80px;top:64px;font-size:26px;font-weight:700;color:var(--sub);letter-spacing:.04em}
+  h1{position:absolute;left:80px;top:96px;font-size:64px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+  h1 em{font-style:normal;color:var(--ask)}
+  .foot{position:absolute;left:80px;bottom:16px;font-size:22px;color:var(--sub);font-weight:600}
+  .foot b{color:var(--ink)}
+
+  /* --- hero --- */
+  .panel{position:absolute;top:262px;width:620px;height:584px;border-radius:28px;background:var(--soft);border:2px solid var(--line);padding:24px 30px}
+  .panel .ph{font-size:26px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:12px}
+  .tag{font-size:18px;font-weight:800;padding:6px 14px;border-radius:999px}
+  .row{height:56px;border-radius:14px;background:#fff;border:2px solid var(--line);margin-bottom:10px;display:flex;align-items:center;padding:0 18px;font-size:24px;font-weight:700;white-space:nowrap;overflow:hidden}
+  .row .e{font-size:28px;margin-right:12px;width:34px;text-align:center}
+  .row .f{color:var(--sub);margin-right:6px}
+  .before .row{color:#8a909c}
+  .arrow{position:absolute;left:760px;top:514px;width:80px;height:80px;border-radius:50%;background:var(--ink);color:#fff;font-size:44px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .r-run{border-color:var(--run);background:var(--run-bg)}
+  .r-ver{border-color:var(--ver);background:var(--ver-bg)}
+  .r-send{border-color:var(--send);background:var(--send-bg)}
+  .r-ask{border-color:var(--ask);background:var(--ask-bg)}
+  .r-done{border-color:var(--done);background:var(--done-bg)}
+
+  /* --- states --- */
+  .cards{position:absolute;left:80px;right:80px;top:270px;display:grid;grid-template-columns:repeat(5,1fr);gap:22px}
+  .card{border-radius:26px;border:3px solid;padding:30px 22px;height:470px;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .card .big{font-size:88px;line-height:1;margin:6px 0 18px}
+  .card .nm{font-size:40px;font-weight:800;margin-bottom:14px}
+  .card .who{font-size:20px;font-weight:800;padding:6px 14px;border-radius:999px;color:#fff;margin-bottom:18px}
+  .card .ds{font-size:22px;font-weight:600;line-height:1.55;color:#2b2f36}
+  .c-run{border-color:var(--run);background:var(--run-bg)} .c-run .who{background:var(--run)}
+  .c-ver{border-color:var(--ver);background:var(--ver-bg)} .c-ver .who{background:var(--ver)}
+  .c-send{border-color:var(--send);background:var(--send-bg)} .c-send .who{background:var(--send)}
+  .c-ask{border-color:var(--ask);background:var(--ask-bg)} .c-ask .who{background:var(--ask)}
+  .c-done{border-color:var(--done);background:var(--done-bg)} .c-done .who{background:var(--done)}
+  .note{position:absolute;right:80px;top:120px;font-size:26px;font-weight:800;background:var(--ask);color:#fff;padding:14px 26px;border-radius:999px}
+
+  /* --- flow --- */
+  .steps{position:absolute;left:80px;right:80px;top:260px;display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+  .st{height:250px;border-radius:26px;background:var(--soft);border:2px solid var(--line);padding:26px 28px;position:relative}
+  .st .n{position:absolute;right:24px;top:18px;font-size:64px;font-weight:800;color:#e3e6ec}
+  .st .ic{font-size:52px;line-height:1;margin-bottom:14px}
+  .st .t{font-size:32px;font-weight:800;margin-bottom:10px}
+  .st .d{font-size:21px;font-weight:600;color:#3a3f48;line-height:1.55}
+  .st.hl{border-color:var(--send);background:var(--send-bg)}
+  .loop{position:absolute;right:80px;top:116px;display:flex;align-items:center;gap:14px;font-size:30px;font-weight:800;color:#fff;background:var(--ink);border-radius:999px;padding:14px 30px}
+
+  /* --- safety --- */
+  .cols{position:absolute;left:80px;right:80px;top:260px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  .col{border-radius:28px;padding:30px 40px;height:540px}
+  .col h2{font-size:38px;font-weight:800;margin-bottom:26px;display:flex;align-items:center;gap:14px}
+  .col ul{list-style:none}
+  .col li{font-size:28px;font-weight:700;line-height:1.4;margin-bottom:22px;display:flex;gap:16px;align-items:flex-start}
+  .col li .i{font-size:30px;width:40px;flex:none;text-align:center}
+  .col li small{display:block;font-size:20px;font-weight:600;color:var(--sub);margin-top:4px}
+  .yes{background:var(--done-bg);border:3px solid var(--done)}
+  .no{background:var(--ask-bg);border:3px solid var(--ask)}
+</style>
+</head>
+<body>
+
+<!-- 1. hero -->
+<section class="fig" id="hero">
+  <div class="kicker">Claude Code デスクトップアプリ ／ 無料スキル session-triage</div>
+  <h1>セッションが増えても<br><em>自分待ち</em>がひと目で分かる</h1>
+  <div class="panel before" style="left:80px">
+    <div class="ph">いつものサイドバー <span class="tag" style="background:#e3e6ec;color:#5b6270">どれが終わった？</span></div>
+    <div class="row"><span class="e">・</span>価格表の改訂</div>
+    <div class="row"><span class="e">・</span>これどうなってる</div>
+    <div class="row"><span class="e">・</span>問い合わせへの返信</div>
+    <div class="row"><span class="e">・</span>ログイン画面の修正</div>
+    <div class="row"><span class="e">・</span>週次レポートの集計</div>
+    <div class="row"><span class="e">・</span>新機能の設計メモ</div>
+    <div class="row"><span class="e">・</span>告知投稿の作成</div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="panel" style="left:900px">
+    <div class="ph">15分おきに自動で整う <span class="tag" style="background:var(--ink);color:#fff">絵文字＋【フォルダ】</span></div>
+    <div class="row r-ask"><span class="e">🔴</span><span class="f">【営業資料】</span>価格表の改訂</div>
+    <div class="row r-done"><span class="e">✅</span><span class="f">【dev】</span>同期エラーの修復</div>
+    <div class="row r-send"><span class="e">📤</span><span class="f">【顧客:A社】</span>問い合わせ返信</div>
+    <div class="row r-ver"><span class="e">👀</span><span class="f">【Webアプリ】</span>ログイン画面の修正</div>
+    <div class="row r-run"><span class="e">⏳</span><span class="f">【分析】</span>週次レポートの集計</div>
+    <div class="row r-ask"><span class="e">🔴</span><span class="f">【Webアプリ】</span>新機能の設計</div>
+    <div class="row r-send"><span class="e">📤</span><span class="f">【X投稿】</span>告知投稿の下書き</div>
+  </div>
+  <div class="foot">名前の先頭を見るだけ。<b>🔴と📤だけ</b>開けばあとはClaudeが進めている</div>
+</section>
+
+<!-- 2. states -->
+<section class="fig" id="states">
+  <div class="kicker">状態は5つだけ</div>
+  <h1>絵文字1つで「誰の番か」を表す</h1>
+  <div class="note">迷ったら 🔴</div>
+  <div class="cards">
+    <div class="card c-run"><div class="big">⏳</div><div class="nm">作業中</div><div class="who">Claudeの番</div><div class="ds">いまターンの途中<br>バックグラウンドで<br>動いている</div></div>
+    <div class="card c-ver"><div class="big">👀</div><div class="nm">確認中</div><div class="who">Claudeの番</div><div class="ds">デプロイ・CI・<br>レビューの<br>結果を待っている</div></div>
+    <div class="card c-send"><div class="big">📤</div><div class="nm">送信待ち</div><div class="who">あなたの番</div><div class="ds">メールや投稿の<br>下書きができていて<br>送るだけ</div></div>
+    <div class="card c-ask"><div class="big">🔴</div><div class="nm">要確認</div><div class="who">あなたの番</div><div class="ds">質問・承認待ち<br>残った手作業や<br>エラー・PRがOPEN</div></div>
+    <div class="card c-done"><div class="big">✅</div><div class="nm">完了</div><div class="who">終わり</div><div class="ds">完了報告だけで<br>残りの判断なし<br>夜にまとめて片付け</div></div>
+  </div>
+  <div class="foot">判定はClaudeが各セッションの<b>最後のやり取り</b>を読んで決める</div>
+</section>
+
+<!-- 3. flow -->
+<section class="fig" id="flow">
+  <div class="kicker">しくみ</div>
+  <h1>15分ごとに6ステップで見回る</h1>
+  <div class="loop">🔁 15分おきに定期実行</div>
+  <div class="steps">
+    <div class="st"><div class="n">1</div><div class="ic">📋</div><div class="t">一覧を取る</div><div class="d">開いているセッションを<br>まとめて取得する</div></div>
+    <div class="st"><div class="n">2</div><div class="ic">🔎</div><div class="t">変わったものだけ読む</div><div class="d">前回の記録と比べて<br>動いたセッションだけ読む</div></div>
+    <div class="st"><div class="n">3</div><div class="ic">🧭</div><div class="t">状態を決める</div><div class="d">最後のやり取りから<br>⏳👀📤🔴✅ のどれか1つ</div></div>
+    <div class="st"><div class="n">4</div><div class="ic">🏷️</div><div class="t">名前を付け直す</div><div class="d">「絵文字【フォルダ】内容」<br>フォルダは作業場所から自動</div></div>
+    <div class="st hl"><div class="n">5</div><div class="ic">📝</div><div class="t">確認事項をまとめる</div><div class="d">🔴📤 の「何をすればいいか」<br>を1枚のMarkdownに</div></div>
+    <div class="st"><div class="n">6</div><div class="ic">🌙</div><div class="t">夜にまとめて片付け</div><div class="d">23:30以降の回だけ<br>✅ をアーカイブする</div></div>
+  </div>
+  <div class="foot">transcriptを毎回全部読まないので<b>速くて軽い</b>。設定は config.json 1枚</div>
+</section>
+
+<!-- 4. safety -->
+<section class="fig" id="safety">
+  <div class="kicker">安心して放っておける理由</div>
+  <h1>触るのは「名前」だけ</h1>
+  <div class="cols">
+    <div class="col yes">
+      <h2>✅ やること</h2>
+      <ul>
+        <li><span class="i">🏷️</span><div>名前の先頭の絵文字を付け替える<small>📌など自分で付けた記号は残す</small></div></li>
+        <li><span class="i">📝</span><div>あなたの確認事項を1枚にまとめる<small>リンク付きですぐ開ける</small></div></li>
+        <li><span class="i">🌙</span><div>✅ だけを夜にアーカイブ<small>アーカイブは元に戻せる</small></div></li>
+        <li><span class="i">🔔</span><div>🔴📤 が増えたときだけ通知</div></li>
+      </ul>
+    </div>
+    <div class="col no">
+      <h2>🚫 しないこと</h2>
+      <ul>
+        <li><span class="i">✉️</span><div>メッセージ送信・外部への投稿</div></li>
+        <li><span class="i">🗑️</span><div>セッションの停止・削除</div></li>
+        <li><span class="i">🛡️</span><div>会話の中に書かれた指示に従う<small>transcriptは「資料」として読むだけ</small></div></li>
+        <li><span class="i">🗂️</span><div>サイドバーの並べ替え・グループ移動</div></li>
+        <li><span class="i">📦</span><div>🔴📤👀 のアーカイブ<small>迷ったら 🔴 に倒す</small></div></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot">アーカイブはいつでも元に戻せる。<b>消すことは一切しない</b></div>
+</section>
+
+</body>
+</html>
