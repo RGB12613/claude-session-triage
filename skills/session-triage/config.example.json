@@ -1,0 +1,38 @@
+{
+  "owner": "あなた",
+  "language": "ja",
+  "data_dir": "~/.claude/session-triage",
+  "report_path": "~/.claude/session-triage/latest.md",
+  "timezone": "Asia/Tokyo",
+  "max_sessions": 100,
+
+  "emoji": {
+    "working": "⏳",
+    "verifying": "👀",
+    "ready_to_send": "📤",
+    "needs_you": "🔴",
+    "done": "✅"
+  },
+  "legacy_emoji": ["🟡", "🔄", "🔵", "🔍", "🟢"],
+
+  "folder_rules": [
+    { "regex": "/clients/([^/]+)", "label": "顧客:$1" },
+    { "contains": "/my-web-app", "label": "Webアプリ" },
+    { "contains": "/content/video", "label": "動画" },
+    { "contains": "/content/x", "label": "X投稿" },
+    { "regex": "/playground/\\d+_([^/]+)", "label": "$1" }
+  ],
+  "folder_fallback_strip_prefixes": ["mycompany-"],
+
+  "skip_title_prefixes": ["【毎日】", "【平日】", "【毎週】", "【30分ごと】"],
+  "self_title_marker": "セッション整理",
+
+  "nightly_archive": {
+    "enabled": true,
+    "start": "23:30",
+    "end": "23:59",
+    "min_idle_minutes": 60
+  },
+
+  "notify": true
+}
