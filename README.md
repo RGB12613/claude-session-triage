@@ -84,10 +84,38 @@ session-triage を定期実行に載せておくと、Claude が各セッショ�
   - セッション管理の道具（`mcp__ccd_session_mgmt__*`）を使うため、ターミナル版の `claude` 単体では動きません
 - 15分おきに回すなら、アプリの定期実行（Scheduled）機能
 
+### Windows対応について
+
+このフォークでは、次の点をWindowsで動くようにしています。
+
+| 項目 | Windowsでの扱い |
+|---|---|
+| インストール | `scripts\install.ps1`（PowerShell 5.1 以降。`-Link` はジャンクションで管理者権限は不要） |
+| `~` | `%USERPROFILE%` に展開します |
+| フォルダのラベル | cwd の `\` を `/` にそろえてから `folder_rules` に当てます。ルールは Windows でも `/` で書きます |
+| 通知（`notify`） | PowerShell のトースト通知で出ます（追加モジュール不要） |
+
 ## 入れ方
 
+### Windows（PowerShell）
+
+```powershell
+git clone https://github.com/RGB12613/claude-session-triage.git
+```
+
+```powershell
+cd claude-session-triage; .\scripts\install.ps1
+```
+
+- `%USERPROFILE%\.claude\skills\session-triage\` にスキルが入ります（`-Link` を付けるとジャンクションで入り、`git pull` で更新できます。管理者権限は不要です）
+- `%USERPROFILE%\.claude\session-triage\config.json` に設定のひな形が置かれます（既にあれば上書きしません）
+- 「スクリプトの実行が無効」と出たら、`powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1` で実行してください
+- Git を使わない場合は、`skills\session-triage` フォルダを上の場所にコピーし、`config.example.json` を `config.json` としてコピーするだけでも入ります
+
+### Mac / Linux
+
 ```bash
-git clone https://github.com/chaenmasahiro0425/claude-session-triage.git
+git clone https://github.com/RGB12613/claude-session-triage.git
 ```
 
 ```bash
@@ -96,15 +124,6 @@ cd claude-session-triage && ./scripts/install.sh
 
 - `~/.claude/skills/session-triage/` にスキルが入ります（`--link` を付けるとシンボリックリンクで入り、`git pull` で更新できます）
 - `~/.claude/session-triage/config.json` に設定のひな形が置かれます（既にあれば上書きしません）
-
-<details>
-<summary>Windows の場合（手で入れる）</summary>
-
-1. `skills\session-triage` フォルダを `%USERPROFILE%\.claude\skills\session-triage` にコピーします
-2. `skills\session-triage\config.example.json` を `%USERPROFILE%\.claude\session-triage\config.json` にコピーします
-3. 通知（`notify`）は macOS だけで動きます。Windows では出ません
-
-</details>
 
 ### 1回だけ動かす
 
@@ -132,7 +151,7 @@ session-triage を15分おきに定期実行して
 |---|---|---|
 | `owner` | `あなた` | 「本人」の呼び方 |
 | `language` | `ja` | 名前・一覧・ログの言語（`ja` / `en`） |
-| `data_dir` | `~/.claude/session-triage` | `state.json` と `log.md` の置き場 |
+| `data_dir` | `~/.claude/session-triage` | `state.json` と `log.md` の置き場（`~` は Windows では `%USERPROFILE%`） |
 | `report_path` | `~/.claude/session-triage/latest.md` | 確認事項の一覧の出力先 |
 | `emoji` | ⏳👀📤🔴✅ | 5つの状態の絵文字 |
 | `legacy_emoji` | 🟡🔄🔵🔍🟢 | 見つけたら付け替える古い絵文字 |
@@ -141,7 +160,7 @@ session-triage を15分おきに定期実行して
 | `skip_title_prefixes` | `【毎日】` など | 名前を変えないセッション（他の定期実行など） |
 | `self_title_marker` | `セッション整理` | このスキルの定期実行を見分ける言葉 |
 | `nightly_archive` | 23:30〜23:59・60分 | 夜のまとめアーカイブ |
-| `notify` | `true` | 🔴📤 が増えたら macOS 通知（他のOSでは無視） |
+| `notify` | `true` | 🔴📤 が増えたらデスクトップ通知（macOS / Windows。他のOSでは無視） |
 | `max_sessions` | `100` | 1回で見る件数の上限。超えた古いものは記録を残したまま見送ります |
 
 ### フォルダのルール
@@ -155,6 +174,8 @@ session-triage を15分おきに定期実行して
   { "regex": "/playground/\\d+_([^/]+)", "label": "$1" }
 ]
 ```
+
+Windows の cwd（`D:\work\clients\acme` など）は、`\` を `/` にそろえてから当てます。ルールは Windows でも `/` で書いてください（上の例なら `/clients/acme` に当たります）。JSON の中で `\` を使うときは `\\` と2つ重ねます。
 
 どれにも当たらなければ、cwd の最後のフォルダ名を使います。【フォルダ】は毎回 cwd から計算し直すので、ルールを変えると次の回から名前に反映されます。
 
@@ -191,4 +212,4 @@ MIT
 - Writes a single Markdown checklist of what you need to do, with links
 - Archives ✅ sessions in a nightly window only. Never sends messages, stops or deletes sessions, follows instructions found inside transcripts, or rearranges your sidebar
 
-Install with `./scripts/install.sh`, then ask Claude in the Code tab: "Run session-triage every 15 minutes". Set `"language": "en"` in `~/.claude/session-triage/config.json` for English titles and reports.
+Install with `.\scripts\install.ps1` (Windows PowerShell) or `./scripts/install.sh` (macOS / Linux), then ask Claude in the Code tab: "Run session-triage every 15 minutes". Set `"language": "en"` in `~/.claude/session-triage/config.json` for English titles and reports.
