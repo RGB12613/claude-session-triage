@@ -84,12 +84,23 @@ session-triage を定期実行に載せておくと、Claude が各セッショ�
   - セッション管理の道具（`mcp__ccd_session_mgmt__*`）を使うため、ターミナル版の `claude` 単体では動きません
 - 15分おきに回すなら、アプリの定期実行（Scheduled）機能
 
+### Windows対応について
+
+このフォークでは、次の点をWindowsで動くようにしています。
+
+| 項目 | Windowsでの扱い |
+|---|---|
+| インストール | `scripts\install.ps1`（PowerShell 5.1 以降。`-Link` はジャンクションで管理者権限は不要） |
+| `~` | `%USERPROFILE%` に展開します |
+| フォルダのラベル | cwd の `\` を `/` にそろえてから `folder_rules` に当てます。ルールは Windows でも `/` で書きます |
+| 通知（`notify`） | PowerShell のトースト通知で出ます（追加モジュール不要） |
+
 ## 入れ方
 
 ### Windows（PowerShell）
 
 ```powershell
-git clone https://github.com/chaenmasahiro0425/claude-session-triage.git
+git clone https://github.com/RGB12613/claude-session-triage.git
 ```
 
 ```powershell
@@ -104,7 +115,7 @@ cd claude-session-triage; .\scripts\install.ps1
 ### Mac / Linux
 
 ```bash
-git clone https://github.com/chaenmasahiro0425/claude-session-triage.git
+git clone https://github.com/RGB12613/claude-session-triage.git
 ```
 
 ```bash
