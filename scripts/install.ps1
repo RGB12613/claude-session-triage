@@ -2,7 +2,7 @@
 #   .\scripts\install.ps1          … コピーで入れる
 #   .\scripts\install.ps1 -Link    … このリポジトリへのジャンクションで入れる（git pull で更新が反映される。管理者権限は不要）
 # 既にインストール済みなら、更新するかどうかのダイアログを出し、「はい」なら自動で入れ替える
-# （古い版は %USERPROFILE%\.claude\session-triageackup\ に退避する）。ダイアログなしで更新するなら -Yes。
+# （古い版は %USERPROFILE%\.claude\session-triage\backup\ に退避する）。ダイアログなしで更新するなら -Yes。
 # 既存の設定ファイル（%USERPROFILE%\.claude\session-triage\config.json）は上書きしない。
 # 実行ポリシーで止まるときは: powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
 param(

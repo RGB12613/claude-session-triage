@@ -109,7 +109,7 @@ cd claude-session-triage; .\scripts\install.ps1
 
 - `%USERPROFILE%\.claude\skills\session-triage\` にスキルが入ります（`-Link` を付けるとジャンクションで入り、`git pull` で更新できます。管理者権限は不要です）
 - `%USERPROFILE%\.claude\session-triage\config.json` に設定のひな形が置かれます（既にあれば上書きしません）
-- すでに入っている状態で再実行すると、更新するかを確かめるダイアログが出て、「はい」なら自動で最新版に入れ替わります（古い版は `%USERPROFILE%\.claude\session-triageackup\` に退避。ダイアログなしなら `-Yes`）
+- すでに入っている状態で再実行すると、更新するかを確かめるダイアログが出て、「はい」なら自動で最新版に入れ替わります（古い版は `%USERPROFILE%\.claude\session-triage\backup\` に退避。ダイアログなしなら `-Yes`）
 - 「スクリプトの実行が無効」と出たら、`powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1` で実行してください
 - Git を使わない場合は、`skills\session-triage` フォルダを上の場所にコピーし、`config.example.json` を `config.json` としてコピーするだけでも入ります
 
