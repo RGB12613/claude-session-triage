@@ -15,6 +15,8 @@ session-triage を定期実行に載せておくと、Claude が各セッショ�
 ✅【dev】同期エラーの修復
 ```
 
+【】の中は、作業フォルダが `folder_rules` に当たればそのラベル、当たらなければ会話から付けた話題タグです。フォルダ名のままだと同じリポジトリのセッションが全部同じ名前になるので、`label_mode` で切り替えられます（[設定](#設定)）。
+
 開くのは **🔴（要確認）と 📤（送信待ち）だけ** で済みます。
 
 [English summary](#english)
@@ -42,7 +44,7 @@ session-triage を定期実行に載せておくと、Claude が各セッショ�
 1. **一覧を取る**: 開いているセッションをまとめて取得します
 2. **変わったものだけ読む**: 前回の記録（`state.json`）と比べ、動いたセッションの最後の数件だけを読みます
 3. **状態を決める**: ⏳👀📤🔴✅ のどれか1つに決めます
-4. **名前を付け直す**: `絵文字【フォルダ】内容` の形にします。【フォルダ】は作業場所（cwd）から自動で決まります
+4. **名前を付け直す**: `絵文字【ラベル】内容` の形にします。【ラベル】は作業場所（cwd）が `folder_rules` に当たればそのラベル、当たらなければ会話から付けた話題タグです（`label_mode` で変更できます）
 5. **確認事項をまとめる**: 🔴📤 のセッションごとに「何をすればいいか」をリンク付きで1枚の Markdown に書きます
 6. **夜にまとめて片付け**: 23:30以降の回だけ、✅ のセッションをアーカイブします
 
@@ -155,8 +157,9 @@ session-triage を15分おきに定期実行して
 | `report_path` | `~/.claude/session-triage/latest.md` | 確認事項の一覧の出力先 |
 | `emoji` | ⏳👀📤🔴✅ | 5つの状態の絵文字 |
 | `legacy_emoji` | 🟡🔄🔵🔍🟢 | 見つけたら付け替える古い絵文字 |
-| `folder_rules` | 下を参照 | cwd から【フォルダ】を決めるルール |
-| `folder_fallback_strip_prefixes` | `["mycompany-"]` | ルールに当たらないとき、フォルダ名から外す接頭辞 |
+| `label_mode` | `hybrid` | 【ラベル】の決め方。`hybrid` = ルールに当たればフォルダ名、無ければ話題タグ／`topic` = 常に話題タグ／`folder` = 常にフォルダ名 |
+| `folder_rules` | 下を参照 | cwd から【ラベル】を決めるルール |
+| `folder_fallback_strip_prefixes` | `["mycompany-"]` | `label_mode` が `folder` で、ルールに当たらないとき、フォルダ名から外す接頭辞 |
 | `skip_title_prefixes` | `【毎日】` など | 名前を変えないセッション（他の定期実行など） |
 | `self_title_marker` | `セッション整理` | このスキルの定期実行を見分ける言葉 |
 | `nightly_archive` | 23:30〜23:59・60分 | 夜のまとめアーカイブ |
@@ -177,12 +180,12 @@ session-triage を15分おきに定期実行して
 
 Windows の cwd（`D:\work\clients\acme` など）は、`\` を `/` にそろえてから当てます。ルールは Windows でも `/` で書いてください（上の例なら `/clients/acme` に当たります）。JSON の中で `\` を使うときは `\\` と2つ重ねます。
 
-どれにも当たらなければ、cwd の最後のフォルダ名を使います。【フォルダ】は毎回 cwd から計算し直すので、ルールを変えると次の回から名前に反映されます。
+どれにも当たらなければ、`hybrid` / `topic` では会話の内容から2〜8字の話題タグ（例: 価格表、A社対応）を付けます。ランダムな worktree 名のような意味のないフォルダ名が出ません。一度付けた話題タグは、主題が変わらない限り維持します。`folder` にすると従来どおり cwd の最後のフォルダ名を使います。ルールに当たったフォルダ名のラベルは毎回 cwd から計算し直すので、ルールを変えると次の回から名前に反映されます。
 
 ## よくある質問
 
 **Q. 名前を自分で付けたセッションも変わりますか？**
-`【フォルダ】内容` の形になっているものは、内容を残して先頭の絵文字だけ付け替えます。そうでないものは内容を要約し直します。名前を変えたくないものは `skip_title_prefixes` に入れてください。
+`【ラベル】内容` の形になっているものは、内容を残して先頭の絵文字だけ付け替えます。そうでないものは内容を要約し直します。名前を変えたくないものは `skip_title_prefixes` に入れてください。
 
 **Q. 毎回すべての会話を読むので重くないですか？**
 前回から `lastActivityAt` か実行状態が変わったセッションだけを、最後の数件だけ読みます。変化がなければ読みません。
@@ -198,7 +201,7 @@ MIT
 
 ## English
 
-**session-triage** is a skill for the Claude desktop app (Code tab). It patrols all your sessions every 15 minutes and renames each one as `<emoji>【folder】summary`, so the sidebar tells you whose turn it is:
+**session-triage** is a skill for the Claude desktop app (Code tab). It patrols all your sessions every 15 minutes and renames each one as `<emoji>【label】summary`, so the sidebar tells you whose turn it is:
 
 | Emoji | State | Whose turn |
 |---|---|---|
@@ -208,6 +211,7 @@ MIT
 | 🔴 | Needs you (question, approval, manual step, error, open PR) | You |
 | ✅ | Done | — |
 
+- The `【label】` comes from your `folder_rules` when the working folder matches, otherwise from a short topic tag Claude picks from the conversation (`label_mode`: `hybrid` / `topic` / `folder`)
 - Only reads sessions that changed since the last run, and only their last few messages
 - Writes a single Markdown checklist of what you need to do, with links
 - Archives ✅ sessions in a nightly window only. Never sends messages, stops or deletes sessions, follows instructions found inside transcripts, or rearranges your sidebar
