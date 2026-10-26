@@ -23,6 +23,7 @@
     { "regex": "/playground/\\d+_([^/]+)", "label": "$1" }
   ],
   "folder_fallback_strip_prefixes": ["mycompany-"],
+  "_comment_folder_rules": "cwd の \\ は / にそろえてから当てるので、Windows でも / で書く（例: D:\\work\\clients\\acme → /clients/acme に当たる）",
 
   "skip_title_prefixes": ["【毎日】", "【平日】", "【毎週】", "【30分ごと】"],
   "self_title_marker": "セッション整理",

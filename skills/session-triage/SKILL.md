@@ -12,9 +12,10 @@ Claudeデスクトップアプリ（Codeタブ）のセッションを1つずつ
 
 1. 設定ファイルを読む。探す順番:
    1. 環境変数 `SESSION_TRIAGE_CONFIG` のパス
-   2. `~/.claude/session-triage/config.json`
+   2. `~/.claude/session-triage/config.json`（Windows では `%USERPROFILE%\.claude\session-triage\config.json`）
    3. どちらも無ければ、このスキルと同じフォルダの `config.example.json` を既定値として使う
-2. `~` はホームディレクトリに展開する。以降の `<data_dir>` などは設定の値を指す。
+2. `~` はホームディレクトリ（Windows では `%USERPROFILE%`）に展開する。以降の `<data_dir>` などは設定の値を指す。
+3. **パスの区切りは `/` と `\` を区別しない。** Windows の cwd（例: `D:\work\clients\acme`）は、`folder_rules` に当てる前に `\` を `/` に置き換えて `D:/work/clients/acme` にそろえる（ドライブ文字の大小も区別しない）。
 3. `<data_dir>` が無ければ作る。
 
 設定の項目（詳しくは `config.example.json`）:
@@ -33,7 +34,7 @@ Claudeデスクトップアプリ（Codeタブ）のセッションを1つずつ
 | `self_title_marker` | このスキルの定期実行を見分ける言葉（既定「セッション整理」） |
 | `nightly_archive` | 夜のまとめアーカイブの時間帯・待ち時間・有効/無効 |
 | `timezone` | 時刻の判定に使うタイムゾーン |
-| `notify` | 要確認・送信待ちが増えたときに macOS 通知を出すか |
+| `notify` | 要確認・送信待ちが増えたときにデスクトップ通知（macOS / Windows）を出すか |
 | `max_sessions` | 1回で見るセッションの上限 |
 
 ## 使うツール
@@ -66,7 +67,7 @@ Claudeデスクトップアプリ（Codeタブ）のセッションを1つずつ
 5. **名前を付け直す。** 形式は `<絵文字>【フォルダ】内容`（例: `🔴【営業資料】価格表の改訂`）。
    - 内容は transcript から「何をしているセッションか」を12〜20字（英語なら3〜6語）で要約する。状態の言葉・日付は入れない。`self_title_marker` の言葉も使わない（手順2で過去の実行と取り違えるため）。
    - すでに `【フォルダ】内容` の形になっているものは内容を変えず、先頭の絵文字だけ今の状態に付け替える。古い絵文字（5つの状態の絵文字と `legacy_emoji`）は外し、二重に付けない。📌 など状態以外の先頭記号は残す。
-   - フォルダは cwd から `folder_rules` を上から順に当てて決める。当たらなければ cwd の最後のフォルダ名から `folder_fallback_strip_prefixes` を外したもの。ホームディレクトリそのものなら `home`。
+   - フォルダは cwd（`\` を `/` にそろえたもの）から `folder_rules` を上から順に当てて決める。当たらなければ cwd の最後のフォルダ名から `folder_fallback_strip_prefixes` を外したもの。ホームディレクトリそのもの（ドライブ直下の `C:/` も含む）なら `home`。
    - 【フォルダ】は毎回 cwd から計算し直す（設定を変えたときに古いラベルが残らないように）。「内容を変えない」のは【フォルダ】より後ろの部分だけ。
    - 名前が今と同じなら `set_session_title` を呼ばない。拒否されたらそのままにしてログに残す。
    - `skip_title_prefixes` で始まるセッションは名前を変えない（状態の記録はする）。
@@ -94,10 +95,24 @@ Claudeデスクトップアプリ（Codeタブ）のセッションを1つずつ
    ```
 8. `<data_dir>/state.json` を `{sessionId: {lastActivityAt, isRunning, status, title, folder, asks}}` で書き直す。消すのは、この回でアーカイブしたものと、`list_sessions` で既にアーカイブ済みと分かったものだけ。取得件数が `max_sessions` に達して一覧に出なかったものは前回の記録を残し、確認事項の一覧の先頭に「上限◯件に達したので古いセッションは見ていない」と1行書く。
 9. `<data_dir>/log.md` に `## YYYY-MM-DD HH:MM` の見出しで、変えたものだけ1行ずつ追記する（改名・アーカイブ）。変更が無ければ「変更なし」の1行。
-10. `notify` が true で、前回の state に無かった要確認・送信待ちが新しく出たときだけ、macOS なら通知を1回出す（macOS 以外では何もしない）。
-    - タイトルはコードに埋め込まず、引数で渡す。埋め込む前に改行を空白に、`'` を `’` に置き換える。
+10. `notify` が true で、前回の state に無かった要確認・送信待ちが新しく出たときだけ、通知を1回出す（macOS と Windows のみ。他のOSでは何もしない）。失敗しても処理は止めず、ログに1行残す。
+    - タイトルはコードに埋め込まず、引数か環境変数で渡す。macOS では埋め込む前に改行を空白に、`'` を `’` に置き換える。
+    - macOS:
     ```bash
     osascript -e 'on run argv' -e 'display notification ("要確認・送信待ちが増えました: " & item 1 of argv) with title "session-triage"' -e 'end run' '<置き換え済みのタイトル>'
+    ```
+    - Windows（PowerShell。追加のモジュールは不要）: タイトルは環境変数 `ST_TITLE` に入れて渡し、コードには書かない。
+    ```powershell
+    $env:ST_TITLE = '<置き換え済みのタイトル>'   # 改行は空白に、' は ’ に置き換えてから入れる
+    powershell -NoProfile -Command {
+      [void][Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
+      $t = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent('ToastText02')
+      $n = $t.GetElementsByTagName('text')
+      [void]$n.Item(0).AppendChild($t.CreateTextNode('session-triage'))
+      [void]$n.Item(1).AppendChild($t.CreateTextNode('要確認・送信待ちが増えました: ' + $env:ST_TITLE))
+      $id = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
+      [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($id).Show([Windows.UI.Notifications.ToastNotification]::new($t))
+    }
     ```
 
 ## 絶対にしないこと
